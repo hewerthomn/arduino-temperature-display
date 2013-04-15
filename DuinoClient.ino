@@ -30,6 +30,8 @@ char time[5];
 
 boolean hasStats = false; // until this is true default text will be displed
 
+int updateFrequency = 10000; // in miliseconds
+
 void setup() {
   lcd.begin(16, 2);
   Ethernet.begin(mac, ip);
@@ -45,7 +47,7 @@ void loop() {
     printDefaultText();
   }
   
-  delay(5000);
+  delay(updateFrequency);
 }
 
 /**
@@ -171,8 +173,8 @@ void printTime() {
 */ 
 void printDefaultText() {
   lcd.home();
-  lcd.print("Temperature for");
+  lcd.print("Temperature from");
   lcd.setCursor(0,1);
-  lcd.print("hewertho.mn");
+  lcd.print("hewertho.mn     ");
   delay(2000);
 }
