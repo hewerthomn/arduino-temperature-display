@@ -1,88 +1,178 @@
 /*
-  Web client
- 
- This sketch connects to a website (http://www.google.com)
- using an Arduino Wiznet Ethernet shield. 
- 
- Circuit:
- * Ethernet shield attached to pins 10, 11, 12, 13
- 
- created 18 Dec 2009
- by David A. Mellis
- modified 9 Apr 2012
- by Tom Igoe, based on work by Adrian McEwen
- 
- */
+* DuinoClient
+*  
+* This sketch connects to a website using an Arduino Wiznet Ethernet shield
+* and display content in a LCD display. 
+* 
+* Circuit:
+*  Ethernet shield attached to pins 10, 11, 12, 13
+*  LCD Matrix 16x2 attached to pins 
+*/
 
 #include <SPI.h>
 #include <Ethernet.h>
+#include <LiquidCrystal.h>
 
-// Enter a MAC address for your controller below.
-// Newer Ethernet shields have a MAC address printed on a sticker on the shield
+IPAddress ip(10,1,1,8);
 byte mac[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED };
-// if you don't want to use DNS (and reduce your sketch size)
-// use the numeric IP instead of the name for the server:
-//IPAddress server(74,125,232,128);  // numeric IP for Google (no DNS)
-char server[] = "www.google.com";    // name address for Google (using DNS)
-
-// Set the static IP address to use if the DHCP fails to assign
-IPAddress ip(10,1,1,7);
+char server[] = "hewertho.mn";    // name address
 
 // Initialize the Ethernet client library
-// with the IP address and port of the server 
-// that you want to connect to (port 80 is default for HTTP):
 EthernetClient client;
 
+// Initialize the LCD Matrix
+LiquidCrystal lcd(8,6,5,4,3,2);
+
+// Variables for content 
+char city[16];
+char temp[11];
+char time[5];
+
+boolean hasStats = false; // until this is true default text will be displed
+
 void setup() {
- // Open serial communications and wait for port to open:
-  Serial.begin(9600);
-   while (!Serial) {
-    ; // wait for serial port to connect. Needed for Leonardo only
-  }
-
-  // start the Ethernet connection:
-  if (Ethernet.begin(mac) == 0) {
-    Serial.println("Failed to configure Ethernet using DHCP");
-    // no point in carrying on, so do nothing forevermore:
-    // try to congifure using IP address instead of DHCP:
-    Ethernet.begin(mac, ip);
-  }
-  // give the Ethernet shield a second to initialize:
+  lcd.begin(16, 2);
+  Ethernet.begin(mac, ip);
   delay(1000);
-  Serial.println("connecting...");
-
-  // if you get a connection, report back via serial:
-  if (client.connect(server, 80)) {
-    Serial.println("connected");
-    // Make a HTTP request:
-    client.println("GET /search?q=arduino HTTP/1.1");
-    client.println("Host: www.google.com");
-    client.println("Connection: close");
-    client.println();
-  } 
-  else {
-    // kf you didn't get a connection to the server:
-    Serial.println("connection failed");
-  }
 }
 
-void loop()
-{
-  // if there are incoming bytes available 
-  // from the server, read them and print them:
-  if (client.available()) {
-    char c = client.read();
-    Serial.print(c);
+void loop() {
+  updateInformation();
+  
+  if(hasStats) {
+    printTemperature();
+  } else {
+    printDefaultText();
   }
+  
+  delay(5000);
+}
 
-  // if the server's disconnected, stop the client:
-  if (!client.connected()) {
-    Serial.println();
-    Serial.println("disconnecting.");
+/**
+ *  Update the status
+ */
+void updateInformation() {
+    if(client.connect(server, 80)) {
+      sendRequest(client);
+      lcd.println("Connected");
+    } else {
+      lcd.println("Connection failed");
+      return;
+    }
+    
+    extractData(client);
     client.stop();
-
-    // do nothing forevermore:
-    while(true);
-  }
 }
 
+/** 
+* Send the request to server
+*/
+void sendRequest(EthernetClient client) {
+  // Make a HTTP request:
+  client.println("GET /api/duino/index.php?s=TEMP HTTP/1.1");
+  client.println("Host: hewertho.mn");
+  client.println("User-Agent: hewerthomn-Arduino");
+  client.println("Connection: close");
+  client.println();
+}
+
+/**
+ * Extract the data and set the variables
+ */
+ void extractData(EthernetClient client) {
+   char currentValue[16];
+   boolean dataFlag = false; // True if data has started
+   boolean endFlag = false; // True if data is reached
+   int j = 0;
+   int i = 0;
+
+    while(client.connected() && !endFlag) {
+      char c = client.read();
+      if(c == '<') {
+        dataFlag = true;
+        hasStats = true;
+      }
+      else if(dataFlag && c == '>') { // End of data
+        setStatValue(j, currentValue);
+        endFlag = true;
+      }
+      else if(dataFlag && c == '|') { // Next dataset
+        setStatValue(j++, currentValue);
+        char currentValue[7];
+        i=0;
+      }
+      else if(dataFlag) { // Data
+        currentValue[i++] = c;
+      }
+    }   
+}
+ 
+/**
+* set a simple stat value depending on the position in the string returned
+* @param integer position
+* @param string value
+*/
+void setStatValue(int position, char value[]) {
+    
+  switch(position) {
+    case 0:
+      for(int i=0; i<16; i++) {
+        city[i] = value[i];
+      }
+      break;
+    case 1:
+      for(int i=0; i<11; i++) {
+        temp[i] = value[i];
+      }
+   break;
+   case 2:
+      for(int i=0; i<5; i++) {
+        time[i] = value[i];
+      }
+    break;
+  }
+}
+  
+/*
+* print the actual temperature
+*/
+void printTemperature() {
+  printCity();
+  printTemp();
+  printTime();
+}
+
+/*
+* print the city name
+*/
+void printCity() {
+  lcd.clear();
+  lcd.home();
+  lcd.println(city);
+}
+/**
+* print the temperature
+*/
+void printTemp() {
+  lcd.setCursor(0,2);
+  lcd.print(temp);
+}
+
+/*
+* print the time
+*/
+void printTime() {
+ lcd.setCursor(11,2);
+ lcd.print(time); 
+}
+
+/**
+* Print a default text
+*/ 
+void printDefaultText() {
+  lcd.home();
+  lcd.print("Temperature for");
+  lcd.setCursor(0,1);
+  lcd.print("hewertho.mn");
+  delay(2000);
+}
