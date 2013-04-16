@@ -40,7 +40,7 @@ char time[5];
 
 boolean hasStats = false; // until this is true default text will be displed
 
-int updateFrequency = 10000; // in miliseconds
+int updateFrequency = 120000; // in miliseconds
 
 void setup() {
   lcd.begin(16, 2);
