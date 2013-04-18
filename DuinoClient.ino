@@ -40,7 +40,7 @@ char time[5];
 
 boolean hasStats = false; // until this is true default text will be displed
 
-int updateFrequency = 120000; // in miliseconds
+int updateFrequency = 10000; // in miliseconds
 
 void setup() {
   lcd.begin(16, 2);
@@ -66,7 +66,7 @@ void loop() {
 void updateInformation() {
     if(client.connect(server, 80)) {
       sendRequest(client);
-      lcd.println("Connected");
+      lcd.println("Connected       ");
     } else {
       lcd.println("Connection failed");
       return;
