@@ -33,7 +33,7 @@ function get_temperature() {
      * preenche com espaços se necessário até o tamanho indicado
      */
     $location = str_pad($location, 16);
-    $temperature  = str_pad("{$relative_humidity}H  {$temp_c}C", 11);
+    $temperature  = str_pad("{$relative_humidity} {$temp_c}C", 11);
 
     return array(        
         'city' => $location,
@@ -42,13 +42,13 @@ function get_temperature() {
     );
 }
 
-// $data = array(
-//  'city' => 'ABCDEDFGHIJKLMNO',
-//  'temp' => '89%H  29C  ',
-//  'time' => '12:10'
-// );
+$data = array(
+ 'city' => 'Porto Velho/RO  ',
+ 'temp' => '90%H  24C  ',
+ 'time' => date('h:i')
+);
 
-$data = get_temperature();
+// $data = get_temperature();
 
 $result = "<{$data['city']}|{$data['temp']}|{$data['time']}>";
 
