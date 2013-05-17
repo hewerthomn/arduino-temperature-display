@@ -44,7 +44,7 @@ long updateFrequency = 5 * 60000; // 60000 = 1 minute
 
 void setup() {
   lcd.begin(16, 2);
-  Ethernet.begin(mac, ip);
+  Ethernet.begin(mac); // , ip);
   delay(1000);
 }
 
