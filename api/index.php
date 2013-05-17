@@ -18,7 +18,7 @@ function get_temperature() {
      * create a account and get your API key at
      * http://www.wunderground.com/
      */
-    $APIKEY = "2879d280ae39c91a";
+    $APIKEY = "b790f2291d7428ee";
     //$json_string = file_get_contents("http://api.wunderground.com/api/{$APIKEY}/conditions/q/BR/Porto_Velho.json");
     $json_string = file_get_contents("http://api.wunderground.com/api/{$APIKEY}/conditions/q/SBPV.json");
     
@@ -42,13 +42,7 @@ function get_temperature() {
     );
 }
 
-$data = array(
- 'city' => 'Porto Velho/RO  ',
- 'temp' => '90%H  24C  ',
- 'time' => date('h:i')
-);
-
-// $data = get_temperature();
+$data = get_temperature();
 
 $result = "<{$data['city']}|{$data['temp']}|{$data['time']}>";
 
